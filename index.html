@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Chess Academy Coach</title>
+<style>
+  :root {
+    --light-sq: #f0d9b5;
+    --dark-sq: #b58863;
+    --highlight: rgba(155, 199, 0, 0.65);
+    --selected: rgba(224, 168, 62, 0.45);
+    --hint: rgba(224, 168, 62, 0.9);
+    --bg: #131419;
+    --bg-alt: #191a21;
+    --panel: #1f212a;
+    --panel-border: #2c2f3a;
+    --ink: #e9e8e3;
+    --muted: #9a9ba6;
+    --success: #4CAF50;
+    --success-dim: #2e7d32;
+    --error: #ff5c5c;
+    --gold: #e0a83e;
+    --gold-dim: #7a5e22;
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: var(--font-body);
+    background: radial-gradient(ellipse at top, var(--bg-alt) 0%, var(--bg) 55%);
+    color: var(--ink);
+    margin: 0;
+    padding: 14px;
+    min-height: 100vh;
+    touch-action: manipulation;
+    display: flex;
+    justify-content: center;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ---------- Header ---------- */
+  header.top {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 2px;
+  }
+  header.top .crest { font-size: clamp(1.2rem, 5vw, 1.5rem); }
+  h1 {
+    margin: 0;
+    text-align: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--ink);
+    font-size: clamp(1.25rem, 4.6vw, 1.7rem);
+  }
+  h1 span { color: var(--success); }
+  .subtitle {
+    text-align: center;
+    margin: -6px 0 0;
+    color: var(--muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  /* ---------- Section label ---------- */
+  .menu-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 2px 0 -2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .menu-label .progress-total { color: var(--gold); font-weight: 600; letter-spacing: 0; text-transform: none; }
+
+  /* ---------- Piece selector ---------- */
+  .piece-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+  }
+  .btn-piece {
+    background: var(--panel);
+    border: 2px solid var(--panel-border);
+    color: var(--ink);
+    padding: 10px 4px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: var(--font-body);
+    font-size: clamp(0.72rem, 3.2vw, 0.85rem);
+    transition: border-color .15s, background .15s, transform .1s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .btn-piece .glyph { font-size: 1.3em; line-height: 1; }
+  .btn-piece .stars-mini { font-size: 0.62rem; color: var(--gold-dim); letter-spacing: 1px; }
+  .btn-piece .stars-mini.has { color: var(--gold); }
+  .btn-piece:active { transform: scale(0.96); }
+  .btn-piece.active { border-color: var(--success); background: #203324; }
+
+  /* ---------- Level pills ---------- */
+  .level-row { display: flex; gap: 6px; }
+  .btn-level {
+    flex: 1;
+    background: var(--panel);
+    border: 1.5px solid var(--panel-border);
+    color: var(--muted);
+    padding: 7px 4px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color .15s, color .15s;
+  }
+  .btn-level .lv-stars { display: block; font-size: 0.68rem; margin-top: 2px; letter-spacing: 1px; color: var(--gold-dim); }
+  .btn-level .lv-stars.has { color: var(--gold); }
+  .btn-level.active { border-color: var(--gold); color: var(--ink); background: #2a2417; }
+
+  /* ---------- Instruction card ---------- */
+  .instruction-card {
+    background: var(--panel);
+    padding: 11px 13px;
+    border-radius: 9px;
+    border-left: 4px solid var(--success);
+  }
+  .instruction-card h3 {
+    margin: 0 0 4px;
+    font-family: var(--font-display);
+    font-size: clamp(0.98rem, 3.8vw, 1.15rem);
+    color: var(--ink);
+  }
+  .instruction-card p { margin: 0; font-size: clamp(0.78rem, 3.3vw, 0.88rem); color: #c9c8c2; line-height: 1.45; }
+
+  /* ---------- Coach feedback ---------- */
+  .coach-feedback {
+    background: #221a1a;
+    border: 1px solid #4a2a2a;
+    padding: 9px 12px;
+    border-radius: 7px;
+    text-align: center;
+    font-weight: 500;
+    font-size: clamp(0.78rem, 3.5vw, 0.88rem);
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .2s, border-color .2s;
+    line-height: 1.35;
+  }
+  .feedback-error { background: #351616; border-color: var(--error); color: #ffb3b3; animation: shake 0.3s ease-in-out; }
+  .feedback-success { background: #163420; border-color: var(--success-dim); color: #b6e3ba; }
+  .feedback-hint { background: #2c2410; border-color: var(--gold-dim); color: #f0d29a; }
+
+  /* ---------- Stat / control bar ---------- */
+  .stat-bar {
+    display: flex;
+    gap: 6px;
+    font-size: 0.72rem;
+  }
+  .stat-chip {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 7px;
+    padding: 6px 4px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .stat-chip b { display: block; color: var(--ink); font-size: 0.92rem; font-family: var(--font-display); }
+
+  .control-row { display: flex; gap: 7px; }
+  .btn-ctl {
+    flex: 1;
+    background: var(--panel);
+    border: 1.5px solid var(--panel-border);
+    color: var(--ink);
+    padding: 9px 4px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: border-color .15s, opacity .15s;
+  }
+  .btn-ctl:disabled { opacity: 0.4; cursor: default; }
+  .btn-ctl.hint { border-color: var(--gold-dim); }
+  .btn-ctl.hint:not(:disabled):hover { border-color: var(--gold); }
+  .btn-ctl svg { width: 15px; height: 15px; }
+
+  /* ---------- Board wrapper + coordinates ---------- */
+  .board-wrap {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    grid-template-rows: 1fr 16px;
+    gap: 3px;
+  }
+  .files, .ranks { display: flex; color: var(--muted); font-size: 0.6rem; user-select: none; }
+  .files { grid-column: 2; grid-row: 2; justify-content: space-around; }
+  .ranks { grid-column: 1; grid-row: 1; flex-direction: column; justify-content: space-around; align-items: center; }
+
+  #board {
+    grid-column: 2; grid-row: 1;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border: 4px solid #33291c;
+    border-radius: 6px;
+    user-select: none;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    position: relative;
+  }
+
+  .square {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: clamp(22px, 8.2vw, 40px);
+    cursor: pointer;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+    outline-offset: -3px;
+  }
+  .square:focus-visible { outline: 3px solid var(--gold); z-index: 4; }
+
+  .light { background-color: var(--light-sq); }
+  .dark { background-color: var(--dark-sq); }
+  .piece {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+    pointer-events: none;
+    z-index: 2;
+    animation: pop-in .18s ease-out;
+  }
+
+  .selected::after { content: ''; position: absolute; inset: 0; background-color: var(--selected); z-index: 1; }
+  .last-from::after, .last-to::after { content: ''; position: absolute; inset: 0; background-color: rgba(224,168,62,0.22); z-index: 1; }
+  .valid-move::after { content: ''; position: absolute; width: 26%; height: 26%; border-radius: 50%; background-color: var(--highlight); z-index: 1; }
+  .valid-capture::after { content: ''; position: absolute; inset: 4%; border: clamp(3px, 1vw, 5px) solid var(--highlight); border-radius: 50%; z-index: 1; }
+  .hint-pulse::after { content: ''; position: absolute; inset: 2%; border-radius: 50%; border: clamp(3px, 1vw, 5px) solid var(--hint); z-index: 1; animation: pulse 1s ease-in-out infinite; }
+
+  @keyframes pop-in { from { transform: scale(0.55); opacity: 0.3; } to { transform: scale(1); opacity: 1; } }
+  @keyframes pulse { 0%,100% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.05); } }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+  /* ---------- Sound toggle ---------- */
+  .sound-toggle {
+    position: absolute;
+    top: -2px; right: -2px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 6px;
+  }
+  header.top { position: relative; }
+
+  /* ---------- Completion overlay ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,14,0.72);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .overlay-card {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 26px 24px 20px;
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+    transform: translateY(14px) scale(0.96);
+    transition: transform .25s ease;
+  }
+  .overlay.show .overlay-card { transform: translateY(0) scale(1); }
+  .overlay-card h2 { font-family: var(--font-display); margin: 4px 0 2px; color: var(--success); font-size: 1.4rem; }
+  .overlay-card p { color: var(--muted); margin: 0 0 14px; font-size: 0.85rem; }
+  .overlay-stars { font-size: 2.1rem; letter-spacing: 6px; color: var(--gold-dim); margin: 8px 0 16px; }
+  .overlay-stars span.lit { color: var(--gold); display: inline-block; animation: star-in .35s ease backwards; }
+  .overlay-stars span.lit:nth-child(1) { animation-delay: .05s; }
+  .overlay-stars span.lit:nth-child(2) { animation-delay: .2s; }
+  .overlay-stars span.lit:nth-child(3) { animation-delay: .35s; }
+  @keyframes star-in { from { transform: scale(0) rotate(-40deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+  .overlay-actions { display: flex; gap: 8px; }
+  .overlay-actions button {
+    flex: 1;
+    padding: 10px 6px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    border: 1.5px solid var(--panel-border);
+    background: var(--bg-alt);
+    color: var(--ink);
+  }
+  .overlay-actions button.primary { border-color: var(--success); background: #1c3020; }
+
+  /* ---------- Desktop layout ---------- */
+  @media (min-width: 900px) {
+    body { padding: 28px; align-items: center; }
+    .app {
+      max-width: 920px;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      grid-template-rows: auto auto;
+      column-gap: 26px;
+      row-gap: 10px;
+      align-items: start;
+    }
+    header.top, .subtitle { grid-column: 1 / -1; }
+    .sidebar {
+      grid-column: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .board-area { grid-column: 2; grid-row: 2; }
+    .board-wrap { max-width: 560px; margin: 0 auto; }
+  }
+
+  @media (min-width: 900px) and (min-height: 760px) {
+    .board-wrap { max-width: 620px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <span class="crest">♞</span>
+    <h1>Chess <span>Academy</span> Coach</h1>
+    <button class="sound-toggle" id="soundBtn" title="Toggle sound" aria-label="Toggle sound">🔊</button>
+  </header>
+  <p class="subtitle">Learn every piece, one legal move at a time</p>
+
+  <div class="sidebar">
+    <div class="menu-label">
+      <span>Select a piece</span>
+      <span class="progress-total" id="progressTotal">0 / 54 ★</span>
+    </div>
+    <div class="piece-selector" id="pieceSelector"></div>
+
+    <div class="menu-label"><span>Difficulty</span></div>
+    <div class="level-row" id="levelRow"></div>
+
+    <div class="instruction-card">
+      <h3 id="lesson-title">Loading Masterclass...</h3>
+      <p id="lesson-text">...</p>
+    </div>
+
+    <div id="coach-box" class="coach-feedback">Select your training asset to analyze vectors.</div>
+
+    <div class="stat-bar">
+      <div class="stat-chip">Moves<b id="statMoves">0</b></div>
+      <div class="stat-chip">Targets left<b id="statTargets">0</b></div>
+      <div class="stat-chip">Hints used<b id="statHints">0</b></div>
+    </div>
+
+    <div class="control-row">
+      <button class="btn-ctl" id="undoBtn" disabled>↶ Undo</button>
+      <button class="btn-ctl hint" id="hintBtn">💡 Hint</button>
+      <button class="btn-ctl" id="resetBtn">⟲ Reset</button>
+    </div>
+  </div>
+
+  <div class="board-area">
+    <div class="board-wrap">
+      <div class="ranks" id="ranks"></div>
+      <div id="board" role="grid" aria-label="Chess training board"></div>
+      <div class="files" id="files"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-card">
+    <h2 id="overlayTitle">Lesson Cleared!</h2>
+    <p id="overlaySub">Every target neutralized with clean, legal geometry.</p>
+    <div class="overlay-stars" id="overlayStars"></div>
+    <div class="overlay-actions">
+      <button id="overlayReplay">Replay</button>
+      <button id="overlayNext" class="primary">Next →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============ AUDIO (tiny synth, no assets) ============ */
+  let audioCtx = null;
+  let soundOn = true;
+  function ctx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+  function beep(freq, dur, type, vol) {
+    if (!soundOn) return;
+    try {
+      const c = ctx();
+      const o = c.createOscillator(); const g = c.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.value = vol || 0.05;
+      o.connect(g); g.connect(c.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+      o.stop(c.currentTime + dur);
+    } catch (e) { /* ignore */ }
+  }
+  const SND = {
+    select: () => beep(520, 0.08, 'triangle', 0.04),
+    move: () => beep(340, 0.12, 'sine', 0.05),
+    capture: () => { beep(260, 0.09, 'square', 0.04); setTimeout(() => beep(520, 0.12, 'sine', 0.05), 60); },
+    error: () => beep(140, 0.22, 'sawtooth', 0.05),
+    hint: () => beep(700, 0.1, 'triangle', 0.04),
+    win: () => { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, 0.18, 'sine', 0.06), i * 110)); }
+  };
+
+  /* ============ DOM refs ============ */
+  const boardEl = document.getElementById('board');
+  const lessonTitle = document.getElementById('lesson-title');
+  const lessonText = document.getElementById('lesson-text');
+  const coachBox = document.getElementById('coach-box');
+  const pieceSelector = document.getElementById('pieceSelector');
+  const levelRow = document.getElementById('levelRow');
+  const statMoves = document.getElementById('statMoves');
+  const statTargets = document.getElementById('statTargets');
+  const statHints = document.getElementById('statHints');
+  const undoBtn = document.getElementById('undoBtn');
+  const hintBtn = document.getElementById('hintBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const soundBtn = document.getElementById('soundBtn');
+  const progressTotal = document.getElementById('progressTotal');
+  const filesEl = document.getElementById('files');
+  const ranksEl = document.getElementById('ranks');
+  const overlay = document.getElementById('overlay');
+  const overlayStars = document.getElementById('overlayStars');
+  const overlayTitle = document.getElementById('overlayTitle');
+  const overlaySub = document.getElementById('overlaySub');
+  const overlayReplay = document.getElementById('overlayReplay');
+  const overlayNext = document.getElementById('overlayNext');
+
+  /* ============ State ============ */
+  let boardState = makeEmptyBoard();
+  let activePiece = 'bishop';
+  let activeLevel = 0;
+  let selectedSquare = null;
+  let validMoves = [];
+  let targetsRemaining = 0;
+  let moveCount = 0;
+  let hintsUsed = 0;
+  let hintedMove = null;
+  let undoStack = [];
+  let lastMove = null; // {from:{r,c}, to:{r,c}}
+
+  function makeEmptyBoard() { return Array(8).fill(null).map(() => Array(8).fill(null)); }
+
+  const SYMBOLS = {
+    white: { bishop: '♗', rook: '♖', knight: '♘', queen: '♕', king: '♔', pawn: '♙' },
+    target: '♟'
+  };
+
+  const PIECE_ORDER = ['pawn', 'knight', 'bishop', 'rook', 'queen', 'king'];
+  const PIECE_LABEL = { pawn: 'Pawn', knight: 'Knight', bishop: 'Bishop', rook: 'Rook', queen: 'Queen', king: 'King' };
+
+  /* ============ Lesson database: 3 levels per piece ============ */
+  const LESSON_DATABASE = {
+    bishop: {
+      levels: [
+        {
+          title: 'Bishop I · Diagonal Basics',
+          text: 'Sliding along diagonal lines only. Reach the single target below without ever stepping on a straight rank or file.',
+          par: 1,
+          setup() {
+            place(6, 4, 'bishop');
+            spawnTarget(3, 1);
+          }
+        },
+        {
+          title: 'Bishop II · Chain Reaction',
+          text: 'Clear all three targets. Remember: it can glide the entire board if the diagonal is clear, but it can never switch square colors.',
+          par: 3,
+          setup() {
+            place(7, 2, 'bishop');
+            spawnTarget(4, 5); spawnTarget(2, 7); spawnTarget(3, 6);
+          }
+        },
+        {
+          title: 'Bishop III · Blocked Lines',
+          text: 'A wall now blocks one of your diagonals. Find the routes that stay open and clear every target.',
+          par: 4,
+          setup() {
+            place(7, 7, 'bishop');
+            wall(5, 5);
+            spawnTarget(4, 4); spawnTarget(2, 2); spawnTarget(5, 1); spawnTarget(1, 5);
+          }
+        }
+      ]
+    },
+    rook: {
+      levels: [
+        {
+          title: 'Rook I · Straight Lines',
+          text: 'Moves perfectly straight — up, down, left, or right. Slide across to the target.',
+          par: 1,
+          setup() { place(4, 0, 'rook'); spawnTarget(4, 6); }
+        },
+        {
+          title: 'Rook II · Corridor Sweep',
+          text: 'Clear all three targets. The Rook can slide infinitely until an obstacle or the board edge stops it.',
+          par: 3,
+          setup() {
+            place(4, 4, 'rook');
+            spawnTarget(4, 1); spawnTarget(4, 6); spawnTarget(1, 4);
+          }
+        },
+        {
+          title: 'Rook III · Maze Walls',
+          text: 'Walls now block direct paths. Reroute through open ranks and files to reach every target.',
+          par: 5,
+          setup() {
+            place(0, 0, 'rook');
+            wall(0, 4); wall(4, 0); wall(4, 4);
+            spawnTarget(0, 7); spawnTarget(7, 0); spawnTarget(4, 6); spawnTarget(7, 4);
+          }
+        }
+      ]
+    },
+    knight: {
+      levels: [
+        {
+          title: 'Knight I · The L-Shape',
+          text: "Jumps in an 'L': two squares one way, then one square perpendicular. Land on the target.",
+          par: 1,
+          setup() { place(4, 4, 'knight'); spawnTarget(2, 5); }
+        },
+        {
+          title: 'Knight II · Ignoring Obstacles',
+          text: 'The Knight is unique — it hops clean over any barrier in its path. Clear both targets.',
+          par: 2,
+          setup() {
+            place(4, 4, 'knight');
+            wall(4, 5); wall(3, 4);
+            spawnTarget(3, 6); spawnTarget(2, 5);
+          }
+        },
+        {
+          title: 'Knight III · The Full Tour',
+          text: 'A longer hop sequence through a crowded board. Plan two moves ahead before you click.',
+          par: 4,
+          setup() {
+            place(7, 1, 'knight');
+            wall(5, 0); wall(5, 2); wall(3, 3);
+            spawnTarget(6, 3); spawnTarget(4, 4); spawnTarget(2, 3); spawnTarget(1, 5);
+          }
+        }
+      ]
+    },
+    queen: {
+      levels: [
+        {
+          title: 'Queen I · Total Freedom',
+          text: 'Combines Rook and Bishop movement. Straight or diagonal — reach the target in one clean line.',
+          par: 1,
+          setup() { place(7, 3, 'queen'); spawnTarget(3, 3); }
+        },
+        {
+          title: 'Queen II · Three-Point Sweep',
+          text: 'Clear all three targets using her full range of straight and diagonal power.',
+          par: 3,
+          setup() {
+            place(7, 0, 'queen');
+            spawnTarget(3, 0); spawnTarget(3, 4); spawnTarget(7, 4);
+          }
+        },
+        {
+          title: 'Queen III · Guarded Center',
+          text: 'Walls carve up the board. Even the Queen must route around solid obstacles — she cannot jump.',
+          par: 5,
+          setup() {
+            place(0, 0, 'queen');
+            wall(3, 3); wall(2, 4); wall(4, 2);
+            spawnTarget(7, 7); spawnTarget(0, 6); spawnTarget(6, 0); spawnTarget(5, 5);
+          }
+        }
+      ]
+    },
+    king: {
+      levels: [
+        {
+          title: 'King I · One Careful Step',
+          text: 'The King may step to any adjacent square, but only ONE square per move. Reach the target.',
+          par: 1,
+          setup() { place(4, 4, 'king'); spawnTarget(3, 4); }
+        },
+        {
+          title: 'King II · Short Patrol',
+          text: 'Clear all three nearby targets, one measured step at a time.',
+          par: 4,
+          setup() {
+            place(4, 4, 'king');
+            spawnTarget(3, 4); spawnTarget(3, 5); spawnTarget(5, 3);
+          }
+        },
+        {
+          title: 'King III · Tight Corner',
+          text: 'Boxed in by walls, the King must thread a careful one-square-at-a-time path to every target.',
+          par: 6,
+          setup() {
+            place(7, 7, 'king');
+            wall(6, 5); wall(5, 6);
+            spawnTarget(7, 4); spawnTarget(4, 7); spawnTarget(5, 5);
+          }
+        }
+      ]
+    },
+    pawn: {
+      levels: [
+        {
+          title: 'Pawn I · First Capture',
+          text: 'Pawns march straight ahead, but they can ONLY capture diagonally — never straight forward. Snap up the target one step diagonally.',
+          par: 1,
+          setup() { place(6, 3, 'pawn', true); spawnTarget(5, 2); }
+        },
+        {
+          title: 'Pawn II · Diagonal Zigzag',
+          text: 'Chain three diagonal captures in a row. Each capture shifts the Pawn one row forward and one file sideways — plan the zigzag.',
+          par: 3,
+          setup() {
+            place(6, 4, 'pawn', true);
+            spawnTarget(5, 3); spawnTarget(4, 4); spawnTarget(3, 3);
+          }
+        },
+        {
+          title: 'Pawn III · Race to Promotion',
+          text: 'Fight through diagonal captures to reach the far rank. Land a Pawn on rank 8 and it promotes to a Queen!',
+          par: 3,
+          setup() {
+            place(3, 3, 'pawn', false);
+            spawnTarget(2, 2); spawnTarget(1, 1); spawnTarget(0, 0);
+          }
+        }
+      ]
+    }
+  };
+
+  /* ============ Board helpers ============ */
+  function place(r, c, type, firstMove) {
+    boardState[r][c] = { type, symbol: SYMBOLS.white[type], firstMove: !!firstMove };
+  }
+  function wall(r, c) { boardState[r][c] = { type: 'wall', symbol: '❌' }; }
+  function spawnTarget(r, c) { boardState[r][c] = { type: 'target', symbol: SYMBOLS.target }; targetsRemaining++; }
+  function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+  /* ============ Progress persistence ============ */
+  const STORAGE_KEY = 'chessAcademyProgress_v1';
+  function loadProgress() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+    const fresh = {};
+    PIECE_ORDER.forEach(p => { fresh[p] = [0, 0, 0]; });
+    return fresh;
+  }
+  let progress = loadProgress();
+  function saveProgress() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch (e) { /* ignore */ }
+  }
+  function totalStars() {
+    let sum = 0;
+    PIECE_ORDER.forEach(p => progress[p].forEach(s => sum += s));
+    return sum;
+  }
+  function updateProgressTotal() {
+    progressTotal.textContent = totalStars() + ' / ' + (PIECE_ORDER.length * 3 * 3) + ' \u2605';
+  }
+
+  /* ============ UI builders ============ */
+  function buildPieceSelector() {
+    pieceSelector.innerHTML = '';
+    PIECE_ORDER.forEach(p => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-piece' + (p === activePiece ? ' active' : '');
+      const earned = progress[p].reduce((a, b) => a + b, 0);
+      btn.innerHTML =
+        '<span class="glyph">' + SYMBOLS.white[p] + '</span>' +
+        '<span>' + PIECE_LABEL[p] + '</span>' +
+        '<span class="stars-mini' + (earned > 0 ? ' has' : '') + '">' + starGlyphs(earned, 9, true) + '</span>';
+      btn.setAttribute('aria-label', PIECE_LABEL[p] + ', ' + earned + ' of 9 stars earned');
+      btn.addEventListener('click', () => selectPiece(p));
+      pieceSelector.appendChild(btn);
+    });
+  }
+
+  function starGlyphs(count, max, compact) {
+    // compact mode: show a simple "n★" style rather than 9 icons
+    if (compact) return count + '\u2605';
+    let s = '';
+    for (let i = 0; i < max; i++) s += (i < count ? '\u2605' : '\u2606');
+    return s;
+  }
+
+  function buildLevelRow() {
+    levelRow.innerHTML = '';
+    const labels = ['Beginner', 'Intermediate', 'Advanced'];
+    LESSON_DATABASE[activePiece].levels.forEach((lvl, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-level' + (i === activeLevel ? ' active' : '');
+      const stars = progress[activePiece][i] || 0;
+      btn.innerHTML = labels[i] + '<span class="lv-stars' + (stars > 0 ? ' has' : '') + '">' + starGlyphs(stars, 3) + '</span>';
+      btn.addEventListener('click', () => selectLevel(i));
+      levelRow.appendChild(btn);
+    });
+  }
+
+  function buildCoordinates() {
+    filesEl.innerHTML = ''; ranksEl.innerHTML = '';
+    'abcdefgh'.split('').forEach(f => {
+      const s = document.createElement('span'); s.style.flex = '1'; s.style.textAlign = 'center'; s.textContent = f;
+      filesEl.appendChild(s);
+    });
+    for (let r = 8; r >= 1; r--) {
+      const s = document.createElement('span'); s.style.flex = '1'; s.style.display = 'flex'; s.style.alignItems = 'center'; s.textContent = r;
+      ranksEl.appendChild(s);
+    }
+  }
+
+  /* ============ Lesson lifecycle ============ */
+  function selectPiece(p) {
+    activePiece = p;
+    activeLevel = 0;
+    buildPieceSelector();
+    buildLevelRow();
+    startLevel();
+  }
+
+  function selectLevel(i) {
+    activeLevel = i;
+    buildLevelRow();
+    startLevel();
+  }
+
+  function startLevel() {
+    boardState = makeEmptyBoard();
+    targetsRemaining = 0;
+    selectedSquare = null;
+    validMoves = [];
+    moveCount = 0;
+    hintsUsed = 0;
+    hintedMove = null;
+    undoStack = [];
+    lastMove = null;
+
+    const lvl = LESSON_DATABASE[activePiece].levels[activeLevel];
+    lessonTitle.textContent = lvl.title;
+    lessonText.textContent = lvl.text;
+    lvl.setup();
+
+    showFeedback('Click your piece to reveal its legal moves.', 'normal');
+    refreshStats();
+    renderBoard();
+  }
+
+  function refreshStats() {
+    statMoves.textContent = moveCount;
+    statTargets.textContent = targetsRemaining;
+    statHints.textContent = hintsUsed;
+    undoBtn.disabled = undoStack.length === 0;
+  }
+
+  function showFeedback(text, type) {
+    coachBox.textContent = text;
+    coachBox.className = 'coach-feedback';
+    if (type === 'error') coachBox.classList.add('feedback-error');
+    if (type === 'success') coachBox.classList.add('feedback-success');
+    if (type === 'hint') coachBox.classList.add('feedback-hint');
+  }
+
+  /* ============ Rendering ============ */
+  function renderBoard() {
+    boardEl.innerHTML = '';
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        const square = document.createElement('div');
+        square.className = 'square ' + ((row + col) % 2 === 0 ? 'light' : 'dark');
+        square.setAttribute('role', 'gridcell');
+        square.tabIndex = 0;
+
+        if (lastMove) {
+          if (lastMove.from.r === row && lastMove.from.c === col) square.classList.add('last-from');
+          if (lastMove.to.r === row && lastMove.to.c === col) square.classList.add('last-to');
+        }
+
+        const item = boardState[row][col];
+        let label = 'Empty square';
+        if (item) {
+          const el = document.createElement('span');
+          el.className = 'piece';
+          el.innerHTML = item.symbol;
+          el.style.color = item.type === 'target' ? '#111' : (item.type === 'wall' ? '#e74c3c' : '#fff');
+          if (item.type === 'wall') el.style.fontSize = 'min(4.6vw, 1.9rem)';
+          square.appendChild(el);
+          label = item.type === 'target' ? 'Target' : item.type === 'wall' ? 'Obstacle' : PIECE_LABEL[item.type] || item.type;
+        }
+
+        if (selectedSquare && selectedSquare.row === row && selectedSquare.col === col) {
+          square.classList.add('selected');
+        }
+
+        const move = validMoves.find(m => m.row === row && m.col === col);
+        if (move) square.classList.add(move.capture ? 'valid-capture' : 'valid-move');
+
+        if (hintedMove && hintedMove.row === row && hintedMove.col === col) {
+          square.classList.add('hint-pulse');
+        }
+
+        square.setAttribute('aria-label', label + ', ' + 'abcdefgh'[col] + (8 - row));
+        square.addEventListener('click', () => handleSquareClick(row, col));
+        square.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSquareClick(row, col); }
+        });
+        boardEl.appendChild(square);
+      }
+    }
+  }
+
+  /* ============ Interaction ============ */
+  function handleSquareClick(row, col) {
+    const clickedItem = boardState[row][col];
+    const move = validMoves.find(m => m.row === row && m.col === col);
+
+    if (move) {
+      commitMove(row, col, move);
+      return;
+    }
+
+    if (clickedItem && clickedItem.type !== 'target' && clickedItem.type !== 'wall') {
+      selectedSquare = { row, col };
+      validMoves = calculateIsolatedMoves(row, col, clickedItem);
+      hintedMove = null;
+      SND.select();
+      renderBoard();
+      return;
+    }
+
+    if (selectedSquare) {
+      const piece = boardState[selectedSquare.row][selectedSquare.col];
+      const feedbackText = diagnoseBadMove(selectedSquare.row, selectedSquare.col, row, col, piece);
+      showFeedback(feedbackText, 'error');
+      SND.error();
+      selectedSquare = null;
+      validMoves = [];
+      hintedMove = null;
+      renderBoard();
+    }
+  }
+
+  function commitMove(row, col, move) {
+    undoStack.push({
+      boardState: clone(boardState),
+      targetsRemaining, moveCount, hintsUsed, lastMove: lastMove ? clone(lastMove) : null
+    });
+
+    const currentPiece = boardState[selectedSquare.row][selectedSquare.col];
+    if (currentPiece.type === 'pawn') currentPiece.firstMove = false;
+
+    let promoted = false;
+    boardState[row][col] = currentPiece;
+    boardState[selectedSquare.row][selectedSquare.col] = null;
+
+    if (currentPiece.type === 'pawn' && row === 0) {
+      currentPiece.type = 'queen';
+      currentPiece.symbol = SYMBOLS.white.queen;
+      promoted = true;
+    }
+
+    if (move.capture) targetsRemaining--;
+    lastMove = { from: { r: selectedSquare.row, c: selectedSquare.col }, to: { r: row, c: col } };
+    moveCount++;
+
+    selectedSquare = null;
+    validMoves = [];
+    hintedMove = null;
+    renderBoard();
+    refreshStats();
+
+    if (move.capture) SND.capture(); else SND.move();
+
+    if (targetsRemaining === 0) {
+      finishLevel();
+    } else if (promoted) {
+      showFeedback('\u2654 Promotion! Your Pawn is now a Queen. Targets remaining: ' + targetsRemaining, 'hint');
+    } else {
+      showFeedback('Good move! Targets remaining: ' + targetsRemaining, 'normal');
+    }
+  }
+
+  function undoMove() {
+    if (!undoStack.length) return;
+    const prev = undoStack.pop();
+    boardState = prev.boardState;
+    targetsRemaining = prev.targetsRemaining;
+    moveCount = prev.moveCount;
+    hintsUsed = prev.hintsUsed;
+    lastMove = prev.lastMove;
+    selectedSquare = null;
+    validMoves = [];
+    hintedMove = null;
+    refreshStats();
+    renderBoard();
+    showFeedback('Move undone. Try a different path.', 'normal');
+  }
+
+  function useHint() {
+    if (!selectedSquare) {
+      // auto-select the trainable piece
+      outer:
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const it = boardState[r][c];
+          if (it && it.type !== 'target' && it.type !== 'wall') {
+            selectedSquare = { row: r, col: c };
+            validMoves = calculateIsolatedMoves(r, c, it);
+            break outer;
+          }
+        }
+      }
+    }
+    if (!validMoves.length) { showFeedback('No legal moves available from here right now.', 'error'); return; }
+    const capture = validMoves.find(m => m.capture);
+    hintedMove = capture || validMoves[0];
+    hintsUsed++;
+    refreshStats();
+    SND.hint();
+    showFeedback('\ud83d\udca1 Hint: the glowing ring shows a safe, legal step.', 'hint');
+    renderBoard();
+  }
+
+  /* ============ Completion + progress ============ */
+  function finishLevel() {
+    const stars = hintsUsed === 0 ? 3 : hintsUsed === 1 ? 2 : 1;
+    const prevBest = progress[activePiece][activeLevel] || 0;
+    if (stars > prevBest) {
+      progress[activePiece][activeLevel] = stars;
+      saveProgress();
+    }
+    buildPieceSelector();
+    buildLevelRow();
+    updateProgressTotal();
+
+    showFeedback('\u2705 Perfect! Every target cleared with legal geometry.', 'success');
+    SND.win();
+
+    overlayTitle.textContent = LESSON_DATABASE[activePiece].levels[activeLevel].title.split('\u00b7')[0].trim() + ' — Cleared!';
+    overlaySub.textContent = moveCount + ' move' + (moveCount === 1 ? '' : 's') + ' \u2022 ' + hintsUsed + ' hint' + (hintsUsed === 1 ? '' : 's') + ' used';
+    overlayStars.innerHTML = [0, 1, 2].map(i => '<span class="' + (i < stars ? 'lit' : '') + '">' + (i < stars ? '\u2605' : '\u2606') + '</span>').join('');
+
+    const hasNextLevel = activeLevel < LESSON_DATABASE[activePiece].levels.length - 1;
+    overlayNext.textContent = hasNextLevel ? 'Next Level →' : 'Next Piece →';
+    overlay.classList.add('show');
+  }
+
+  function closeOverlay() { overlay.classList.remove('show'); }
+
+  overlayReplay.addEventListener('click', () => { closeOverlay(); startLevel(); });
+  overlayNext.addEventListener('click', () => {
+    closeOverlay();
+    const levels = LESSON_DATABASE[activePiece].levels;
+    if (activeLevel < levels.length - 1) {
+      selectLevel(activeLevel + 1);
+    } else {
+      const idx = PIECE_ORDER.indexOf(activePiece);
+      const nextPiece = PIECE_ORDER[(idx + 1) % PIECE_ORDER.length];
+      selectPiece(nextPiece);
+    }
+  });
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeOverlay(); });
+
+  /* ============ Coaching diagnostics ============ */
+  function diagnoseBadMove(sr, sc, er, ec, piece) {
+    if (sr === er && sc === ec) return 'Selection cleared.';
+
+    const dr = er - sr, dc = ec - sc;
+    const absRow = Math.abs(dr), absCol = Math.abs(dc);
+
+    switch (piece.type) {
+      case 'bishop':
+        if ((sr + sc) % 2 !== (er + ec) % 2) return '\u274c Bad Move! Bishops are locked to one square color — they can never switch from light to dark.';
+        if (absRow !== absCol) return '\u274c Bad Move! Bishops only travel on clean diagonals. That square is off the line.';
+        return '\u274c Bad Move! Line of sight blocked. Bishops cannot jump through solid pieces.';
+
+      case 'rook':
+        if (sr !== er && sc !== ec) return '\u274c Bad Move! Rooks travel in dead-straight rows or columns only. You bent the path.';
+        return '\u274c Bad Move! Rooks slide, but cannot leap over obstacles. Your path is blocked.';
+
+      case 'queen':
+        if (absRow !== absCol && sr !== er && sc !== ec) return '\u274c Bad Move! The Queen must move in a perfectly straight or perfectly diagonal line — no bends.';
+        return '\u274c Bad Move! Even the Queen cannot jump through walls or targets.';
+
+      case 'king':
+        if (absRow > 1 || absCol > 1) return '\u274c Bad Move! The King moves any direction, but only ONE square per turn.';
+        return '\u274c Bad Move! Illegal square.';
+
+      case 'knight':
+        if (!((absRow === 2 && absCol === 1) || (absRow === 1 && absCol === 2))) return "\u274c Bad Move! The Knight moves in a strict 'L' shape — two squares one way, one square across.";
+        return '\u274c Bad Move! Illegal square.';
+
+      case 'pawn':
+        if (dr > 0) return '\u274c Bad Move! Pawns never step backward.';
+        if (dr === 0) return '\u274c Bad Move! Pawns never move sideways.';
+        if (dc === 0) {
+          if (absRow > 2) return '\u274c Bad Move! A Pawn can never advance more than 2 squares, even on its first move.';
+          if (absRow === 2 && !piece.firstMove) return '\u274c Bad Move! The 2-square leap is only legal on a Pawn\u2019s very first move.';
+          if (boardState[er][ec]) return '\u274c Bad Move! Pawns cannot capture straight ahead — that square is occupied and blocks the path.';
+          return '\u274c Bad Move! Path is obstructed.';
+        }
+        if (absCol === 1 && dr === -1) {
+          if (!boardState[er][ec]) return '\u274c Bad Move! Pawns may only step diagonally when actively CAPTURING. That square is empty.';
+        }
+        return '\u274c Bad Move! Pawns move 1 square straight ahead, or 1 square diagonally only to capture.';
+    }
+    return '\u274c Bad Move! That is an illegal path for this piece.';
+  }
+
+  /* ============ Move calculation ============ */
+  function calculateIsolatedMoves(startRow, startCol, piece) {
+    const moves = [];
+
+    function slide(dirs) {
+      dirs.forEach(d => {
+        let r = startRow + d[0], c = startCol + d[1];
+        while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+          const target = boardState[r][c];
+          if (!target) { moves.push({ row: r, col: c, capture: false }); }
+          else {
+            if (target.type === 'target') moves.push({ row: r, col: c, capture: true });
+            break;
+          }
+          r += d[0]; c += d[1];
+        }
+      });
+    }
+
+    function step(dirs) {
+      dirs.forEach(d => {
+        const r = startRow + d[0], c = startCol + d[1];
+        if (r >= 0 && r < 8 && c >= 0 && c < 8) {
+          const target = boardState[r][c];
+          if (!target) moves.push({ row: r, col: c, capture: false });
+          else if (target.type === 'target') moves.push({ row: r, col: c, capture: true });
+        }
+      });
+    }
+
+    const diag = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+    const ortho = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    const knightDirs = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+
+    switch (piece.type) {
+      case 'bishop': slide(diag); break;
+      case 'rook': slide(ortho); break;
+      case 'queen': slide([...diag, ...ortho]); break;
+      case 'king': step([...diag, ...ortho]); break;
+      case 'knight': step(knightDirs); break;
+      case 'pawn':
+        if (startRow - 1 >= 0 && !boardState[startRow - 1][startCol]) {
+          moves.push({ row: startRow - 1, col: startCol, capture: false });
+          if (piece.firstMove && startRow - 2 >= 0 && !boardState[startRow - 2][startCol]) {
+            moves.push({ row: startRow - 2, col: startCol, capture: false });
+          }
+        }
+        [-1, 1].forEach(offset => {
+          const r = startRow - 1, c = startCol + offset;
+          if (r >= 0 && c >= 0 && c < 8) {
+            if (boardState[r][c] && boardState[r][c].type === 'target') {
+              moves.push({ row: r, col: c, capture: true });
+            }
+          }
+        });
+        break;
+    }
+    return moves;
+  }
+
+  /* ============ Controls wiring ============ */
+  undoBtn.addEventListener('click', undoMove);
+  hintBtn.addEventListener('click', useHint);
+  resetBtn.addEventListener('click', () => { showFeedback('Board reset. Fresh start!', 'normal'); startLevel(); });
+  soundBtn.addEventListener('click', () => {
+    soundOn = !soundOn;
+    soundBtn.textContent = soundOn ? '\ud83d\udd0a' : '\ud83d\udd07';
+    if (soundOn) beep(600, 0.06, 'triangle', 0.04);
+  });
+
+  /* ============ Init ============ */
+  buildCoordinates();
+  buildPieceSelector();
+  buildLevelRow();
+  updateProgressTotal();
+  startLevel();
+
+})();
+</script>
+</body>
+</html>
